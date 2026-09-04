@@ -40,8 +40,17 @@ export class Fireworks {
 
   stop(): void {
     this.active = false;
-    for (const burst of this.bursts) this.disposeBurst(burst);
+    for (const burst of this.bursts) {
+      this.root.remove(burst.points);
+      this.disposeBurst(burst);
+    }
     this.bursts = [];
+  }
+
+  /** シーンから はなして、GPU の しげんも かえす */
+  dispose(): void {
+    this.stop();
+    this.root.parent?.remove(this.root);
   }
 
   get running(): boolean {

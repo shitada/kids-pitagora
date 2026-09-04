@@ -211,11 +211,16 @@ function demoStage(
 }
 
 function part(kind: PartKind, x: number, y: number, angle = 0): Placement {
-  return { id: `demo-${kind}`, kind, x, y, angle };
+  demoPartCounter += 1;
+  // ID は かならず ユニークに する。おなじ ID だと 描画も 物理も
+  // さいしょの 1 つに まとめられてしまう（ドミノが 1 まいしか でない）。
+  return { id: `demo-${kind}-${demoPartCounter}`, kind, x, y, angle };
 }
 
+let demoPartCounter = 0;
+
 /** パーツごとの しくみが よく わかる ちいさな デモ */
-function buildDemo(kind: PartKind): Demo {
+export function buildDemo(kind: PartKind): Demo {
   const floor: StageConfig['terrain'] = [
     { x: 0, y: -3.1, w: 11, h: 0.6, angle: 0, material: 'wood' },
   ];

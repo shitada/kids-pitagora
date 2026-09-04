@@ -345,7 +345,9 @@ function buildHammer(): PartVisual {
   return {
     group,
     update: (state) => {
-      pivot.rotation.z = -(state.theta ?? 0);
+      // 物理の PendulumHammer は あたまを pivot + L*(sin θ, -cos θ) に おく。
+      // こどもの pivot は ローカル -Y に あるので、そのまま +θ で まわすと 一致する。
+      pivot.rotation.z = state.theta ?? 0;
     },
     dispose: collectDisposables(group),
   };

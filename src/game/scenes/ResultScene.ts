@@ -126,7 +126,7 @@ export class ResultScene implements GameScene {
   }
 
   exit(): void {
-    this.fireworks?.stop();
+    this.fireworks?.dispose();
     this.fireworks = null;
     this.root?.remove();
     this.root = null;

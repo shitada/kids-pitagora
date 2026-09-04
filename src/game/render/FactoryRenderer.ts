@@ -533,12 +533,28 @@ export class FactoryRenderer {
         if (node instanceof THREE.Mesh) {
           node.geometry.dispose();
           const material = node.material;
-          if (Array.isArray(material)) material.forEach((m) => m.dispose());
-          else material.dispose();
+          if (Array.isArray(material)) material.forEach(disposeMaterial);
+          else disposeMaterial(material);
         }
       });
     }
   }
+}
+
+/**
+ * マテリアルと、そこに ぶら下がっている テクスチャを かいほうする。
+ * Three.js の `Material.dispose()` は テクスチャまでは かいほうしないので、
+ * ここで めいじてきに 消さないと ステージを かえるたびに GPU の しげんが のこる。
+ */
+function disposeMaterial(material: THREE.Material): void {
+  const textured = material as Partial<THREE.MeshStandardMaterial>;
+  textured.map?.dispose();
+  textured.emissiveMap?.dispose();
+  textured.normalMap?.dispose();
+  textured.roughnessMap?.dispose();
+  textured.metalnessMap?.dispose();
+  textured.alphaMap?.dispose();
+  material.dispose();
 }
 
 function makeGearGeometry(radius: number): THREE.ExtrudeGeometry {

@@ -39,6 +39,8 @@ export class PlacementInput {
   private drag: DragMode = { type: 'none' };
   private selectedId: string | null = null;
   private rotating = false;
+  /** いま そうさしている ゆびの ID。べつの ゆびが ふれても じゃまされない ように する */
+  private activePointerId: number | null = null;
   private rotateStartAngle = 0;
   private rotatePartAngle = 0;
   private readonly handle: HTMLDivElement;
@@ -75,6 +77,7 @@ export class PlacementInput {
       { id: `tmp-${this.nextId}`, kind, x: world.x, y: world.y, angle: defaultAngle(kind) },
       PLACE_GRID,
     );
+    this.activePointerId = event.pointerId;
     this.drag = { type: 'new', draft };
     this.setSelected(null);
     this.options.setTrashVisible(true, false);
@@ -126,6 +129,7 @@ export class PlacementInput {
       return;
     }
     event.preventDefault();
+    this.activePointerId = event.pointerId;
     this.setSelected(hit.id);
     this.drag = {
       type: 'move',
@@ -139,6 +143,7 @@ export class PlacementInput {
   };
 
   private onPointerMove = (event: PointerEvent): void => {
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
     if (this.rotating) {
       this.updateRotation(event);
       return;
@@ -161,8 +166,10 @@ export class PlacementInput {
   };
 
   private onPointerUp = (event: PointerEvent): void => {
+    if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
     if (this.rotating) {
       this.rotating = false;
+      this.activePointerId = null;
       this.handle.style.cursor = 'grab';
       return;
     }
@@ -170,6 +177,7 @@ export class PlacementInput {
 
     const drag = this.drag;
     this.drag = { type: 'none' };
+    this.activePointerId = null;
     this.options.renderer.setGhost(null, true);
     this.options.setTrashVisible(false, false);
 
@@ -222,6 +230,7 @@ export class PlacementInput {
     event.preventDefault();
     event.stopPropagation();
     this.rotating = true;
+    this.activePointerId = event.pointerId;
     this.handle.style.cursor = 'grabbing';
     const world = this.options.renderer.screenToWorld(event.clientX, event.clientY);
     this.rotateStartAngle = Math.atan2(world.y - placement.y, world.x - placement.x);
