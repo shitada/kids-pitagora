@@ -1,5 +1,5 @@
 import type { Placement, PlacementCheck, StageConfig } from '@/types';
-import { FIXED_DT, MAX_STEPS_PER_FRAME, PLACE_GRID } from '@/game/config/physics';
+import { FIXED_DT, MAX_STEPS_PER_FRAME } from '@/game/config/physics';
 import { PART_ORDER } from '@/game/config/parts';
 import { getStageByNumber } from '@/game/config/stages';
 import { UI } from '@/game/config/palette';
@@ -412,4 +412,4 @@ export function createSandboxStage(): StageConfig {
   };
 }
 
-export { PLACE_GRID };
+

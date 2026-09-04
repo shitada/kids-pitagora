@@ -15,11 +15,10 @@ export class TitleScene implements GameScene {
       `linear-gradient(180deg, rgba(219,234,254,0.88), rgba(191,216,238,0.94))`,
     );
 
-    root.appendChild(heading('⚙️ ころころ<br/>ピタゴラこうじょう'));
-    root.lastElementChild!.innerHTML = '⚙️ ころころ<br/>ピタゴラこうじょう';
-    root.appendChild(
-      subText('パーツを おいて ボールを ゴールまで はこぼう！'),
-    );
+    const title = heading('');
+    title.innerHTML = '⚙️ ころころ<br/>ピタゴラこうじょう';
+    root.appendChild(title);
+    root.appendChild(subText('パーツを おいて ボールを ゴールまで はこぼう！'));
 
     const buttons = el('div', 'display:flex;flex-direction:column;gap:12px;align-items:center;');
     buttons.appendChild(

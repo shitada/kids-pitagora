@@ -23,7 +23,6 @@ export class ZukanScene implements GameScene {
   private demoPlacements: Placement[] = [];
   private accumulator = 0;
   private elapsed = 0;
-  private current: PartKind = 'plate';
   private descriptionBox: HTMLDivElement | null = null;
   private cardRow: HTMLDivElement | null = null;
 
@@ -141,7 +140,6 @@ export class ZukanScene implements GameScene {
   }
 
   private select(kind: PartKind): void {
-    this.current = kind;
     const config = PARTS[kind];
 
     if (this.cardRow) {
@@ -182,7 +180,6 @@ export class ZukanScene implements GameScene {
     this.accumulator = 0;
     this.runtime = new StageRuntime(this.demoStage, this.demoPlacements, { freeplay: true });
     this.ctx.renderer.resetVisualState(this.demoStage);
-    void this.current;
   }
 }
 
