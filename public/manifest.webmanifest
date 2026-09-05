@@ -1,0 +1,32 @@
+{
+  "name": "ころころピタゴラこうじょう",
+  "short_name": "ピタゴラ",
+  "description": "パーツをおいて ボールをゴールまで はこぶ、こども向けの3Dぶつりパズル。",
+  "lang": "ja",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#2b3a67",
+  "theme_color": "#2b3a67",
+  "icons": [
+    {
+      "src": "favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
