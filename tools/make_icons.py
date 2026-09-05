@@ -27,7 +27,7 @@ import math
 import os
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageChops, ImageDraw
 
 SS = 8  # スーパーサンプリング倍率
 GRID = 64.0
@@ -47,6 +47,82 @@ ORANGE_DARK = (198, 78, 52)
 GREEN = (142, 197, 164)
 GREEN_DARK = (105, 158, 127)
 BLUE = (159, 201, 232)
+
+
+def _gradient_canvas(n: int) -> Image.Image:
+    """n 四方の たてのグラデーション背景だけを かく。"""
+    img = Image.new("RGB", (n, n), NAVY)
+    d = ImageDraw.Draw(img)
+    for y in range(n):
+        t = y / max(1, n - 1)
+        d.line(
+            [(0, y), (n, y)],
+            fill=tuple(round(NAVY[i] + (NAVY_DARK[i] - NAVY[i]) * t) for i in range(3)),
+        )
+    return img
+
+
+def _background_reference(px: int) -> Image.Image:
+    """絵柄の はんていに つかう「絵柄なしの背景」。
+
+    draw_icon と まったく おなじ てじゅん（スーパーサンプリング -> LANCZOS 縮小）で
+    つくるので、絵柄が ない ところは ほぼ ぴったり 一致する。
+    背景は たてのグラデーションなので、単一色と くらべると 角を 誤検出する。
+    """
+    return _gradient_canvas(px * SS).resize((px, px), Image.LANCZOS)
+
+
+def measure_artwork_radius(img: Image.Image, tolerance: int = 8) -> float:
+    """絵柄の 画素が 中心から どれだけ はなれているかの 最大値を かえす。
+
+    行ごとの 期待背景色との 差分で 絵柄を ぬき出すので、
+    グラデーション背景でも 誤検出しない。
+    """
+    px = img.size[0]
+    art = img.convert("RGB")
+    diff = ImageChops.difference(art, _background_reference(px))
+    r, g, b = diff.split()
+    # 3 チャンネルの 最大差分（convert("L") は 輝度平均なので つかわない）
+    mask = ImageChops.lighter(ImageChops.lighter(r, g), b).point(
+        lambda v: 255 if v > tolerance else 0
+    )
+    box = mask.getbbox()
+    if box is None:
+        return 0.0
+
+    pixels = mask.load()
+    cx = cy = (px - 1) / 2
+    max_r = 0.0
+    for y in range(box[1], box[3]):
+        for x in range(box[0], box[2]):
+            if pixels[x, y]:
+                d = math.hypot(x - cx, y - cy)
+                if d > max_r:
+                    max_r = d
+    return max_r
+
+
+def verify_maskable(img: Image.Image, name: str) -> None:
+    """maskable アイコンが Android の安全領域に おさまっているか たしかめる。
+
+    Android は 外周およそ 10% を けずる（安全領域＝中央 80% の円）。
+    はみ出していたら はっきり しっぱいさせて、退行に すぐ 気づけるようにする。
+    """
+    px = img.size[0]
+    safe_r = px * 0.8 / 2
+    max_r = measure_artwork_radius(img)
+    if max_r > safe_r:
+        raise SystemExit(
+            f"\n{name}: 絵柄が Android の安全領域から はみ出しています。\n"
+            f"  実測の最大半径 : {max_r:.1f}px\n"
+            f"  安全半径       : {safe_r:.1f}px（中央 80% の円）\n"
+            f"  超過           : {max_r - safe_r:.1f}px\n"
+            f"  MASKABLE_CONTENT_SCALE（いま {MASKABLE_CONTENT_SCALE}）を小さくしてください。"
+        )
+    print(
+        f"{name:32s} 安全領域 OK: 最大半径 {max_r:.1f}px / "
+        f"安全半径 {safe_r:.1f}px（余裕 {safe_r - max_r:.1f}px）"
+    )
 
 
 def draw_icon(px: int, rounded: bool, content_scale: float = 1.0) -> Image.Image:
@@ -73,16 +149,8 @@ def draw_icon(px: int, rounded: bool, content_scale: float = 1.0) -> Image.Image
         """64 グリッドの長さ（半径・太さ）-> ピクセル"""
         return v * content_scale * s
 
-    img = Image.new("RGB", (n, n), NAVY)
+    img = _gradient_canvas(n)
     d = ImageDraw.Draw(img)
-
-    # 背景をたてのグラデーションにする
-    for y in range(n):
-        t = y / max(1, n - 1)
-        d.line(
-            [(0, y), (n, y)],
-            fill=tuple(round(NAVY[i] + (NAVY_DARK[i] - NAVY[i]) * t) for i in range(3)),
-        )
 
     def plank(x1, y1, x2, y2, w, color, shade):
         """まるい はしの いた を かく（下側に影をつけて立体感を出す）。"""
@@ -177,16 +245,20 @@ def main() -> int:
     ):
         draw_icon(px, rounded=True).save(os.path.join(out_dir, name), optimize=True)
 
-    # maskable: Android が 外周およそ 10% を けずるので、絵柄を 74% に ちぢめて
+    # maskable: Android が 外周およそ 10% を けずるので、絵柄を ちぢめて
     # 中央 80% の 安全領域に おさめる。背景は フルブリードの ベタ塗り。
-    draw_icon(512, rounded=False, content_scale=MASKABLE_CONTENT_SCALE).save(
-        os.path.join(out_dir, "maskable-512x512.png"), optimize=True
-    )
+    maskable_name = "maskable-512x512.png"
+    maskable = draw_icon(512, rounded=False, content_scale=MASKABLE_CONTENT_SCALE)
+    maskable.save(os.path.join(out_dir, maskable_name), optimize=True)
 
     for f in sorted(os.listdir(out_dir)):
         if f.endswith(".png"):
             p = os.path.join(out_dir, f)
             print(f"{f:32s} {os.path.getsize(p):>7,} bytes")
+
+    # 絵柄を すこしでも うごかすと 安全領域を われるので、書き出すたびに たしかめる
+    print()
+    verify_maskable(maskable, maskable_name)
     return 0
 
 
