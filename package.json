@@ -1,0 +1,24 @@
+{
+  "name": "kids-pitagora",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "5〜10歳向けの3D物理パズル「ころころピタゴラこうじょう」",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "jsdom": "^28.1.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vitest": "^3.0.0"
+  }
+}
